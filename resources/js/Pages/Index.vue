@@ -1,0 +1,96 @@
+<template>
+    <header :style="showSearch ? 'top: -235px' : 'top: 50px'">
+        <div class="header">
+            <div class="block-i">
+                <i class="fa-solid fa-arrow-down" @click="toggleSearch"
+                   :style="showSearch ? 'transform: rotate(0deg)' : 'transform: rotate(180deg)'"></i>
+            </div>
+            <h1>GraphFinder</h1>
+            <input type="text" @input="getImgSearch()" v-model="theme" class="search"
+                   placeholder="Rechercher un thème...">
+            <div v-if="searching">
+                <p class="good">Recherche en cours...</p>
+            </div>
+            <div v-else-if="imgs.length === 0">
+                <p class="error">Aucun résultat</p>
+            </div>
+            <div v-else-if="loading">
+                <progress class="pure-material-progress-circular"/>
+            </div>
+        </div>
+    </header>
+    <div class="block-images">
+        <div v-for="img in imgs" class="image">
+            <img :src="img['largeImageURL']" @load="onImageLoad"
+                 :style="loading ? 'opacity: 0; transform: scale(0)' : 'opacity: 1; transform: scale(1);'">
+        </div>
+    </div>
+</template>
+
+<script>
+export default {
+    name: "Index",
+    data() {
+        return {
+            theme: "",
+            imgs: [],
+            page: 1,
+            searching: true,
+            loading: true,
+            loadedImages: 0,
+            totalImages: 0,
+            showSearch: false,
+        }
+    },
+    mounted() {
+        this.getDefaultSearch();
+    },
+    methods: {
+        toggleSearch() {
+            this.showSearch = !this.showSearch;
+        },
+        async getDefaultSearch() {
+            this.searching = true;
+            this.loading = true;
+            this.loadedImages = 0;
+            fetch(`https://pixabay.com/api/?q=nature&page=${this.page}&per_page=9&key=37894372-c0837f7cd2c6cedbc821bb625`)
+                .then(response => response.json())
+                .then(data => {
+                    this.searching = false;
+                    this.imgs = data["hits"];
+                    this.totalImages = this.imgs.length;
+                }).catch(error => {
+                console.log(error);
+            });
+        },
+        async getImgSearch() {
+            this.searching = true;
+            this.loading = true;
+            this.loadedImages = 0;
+            if(!this.theme){
+                this.getDefaultSearch();
+                return;
+            }
+            fetch(`https://pixabay.com/api/?q=${this.theme}&page=${this.page}&per_page=9&key=37894372-c0837f7cd2c6cedbc821bb625`)
+                .then(response => response.json())
+                .then(data => {
+                    this.searching = false;
+                    this.imgs = data["hits"];
+                    this.totalImages = this.imgs.length;
+                }).catch(error => {
+                console.log(error);
+            });
+        },
+        onImageLoad() {
+            this.loadedImages++;
+            if (this.loadedImages === this.totalImages) {
+                this.loading = false;
+            }
+        },
+    }
+}
+</script>
+
+<style scoped>
+
+</style>
