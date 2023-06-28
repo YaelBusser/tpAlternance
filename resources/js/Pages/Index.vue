@@ -20,9 +20,23 @@
         </div>
     </header>
     <div class="block-images">
-        <div v-for="img in imgs" class="image">
+        <div v-for="(img, index) in imgs" class="image">
             <img :src="img['largeImageURL']" @load="onImageLoad"
-                 :style="loading ? 'opacity: 0; transform: scale(0)' : 'opacity: 1; transform: scale(1);'">
+                 :style="loading ? 'opacity: 0; transform: scale(0)' : 'opacity: 1; transform: scale(1);'"
+                 @mouseover="indexInfo = index;"
+            >
+            <div class="infos" :style="!loading && indexInfo === index ? 'opacity: 1; z-index: 5; bottom: 0;' : 'opacity: 0;z-index: -5; bottom: -500px'">
+                <p>Type : <span>{{ img["type"] }}</span></p>
+                <p>Tags : <span>{{ img["tags"] }}</span></p>
+                <p><span><a :href="img['largeImageURL']" target="_blank">lien</a></span></p>
+                <p>Vues : <span>{{ img["views"] }}</span></p>
+                <p>Téléchargements : <span>{{ img["downloads"] }}</span></p>
+                <p>Likes : <span>{{ img["likes"] }}</span></p>
+                <p>Commentaires : <span>{{ img["comments"] }}</span></p>
+            </div>
+        </div>
+        <div class="plus">
+            <p @click="loadMoreImages()">voir plus</p>
         </div>
     </div>
 </template>
@@ -40,6 +54,7 @@ export default {
             loadedImages: 0,
             totalImages: 0,
             showSearch: false,
+            indexInfo: 0,
         }
     },
     mounted() {
@@ -48,6 +63,21 @@ export default {
     methods: {
         toggleSearch() {
             this.showSearch = !this.showSearch;
+        },
+        loadMoreImages() {
+            this.page++;
+            this.loading = true;
+            fetch(`https://pixabay.com/api/?q=${this.theme}&page=${this.page}&per_page=9&key=37894372-c0837f7cd2c6cedbc821bb625`)
+                .then(response => response.json())
+                .then(data => {
+                    this.searching = false;
+                    this.imgs.push(...data["hits"]);
+                    this.totalImages = this.imgs.length;
+                    this.loading = false;
+                }).catch(error => {
+                console.log(error);
+                this.loading = false;
+            });
         },
         async getDefaultSearch() {
             this.searching = true;
@@ -64,6 +94,7 @@ export default {
             });
         },
         async getImgSearch() {
+            this.page = 1;
             this.searching = true;
             this.loading = true;
             this.loadedImages = 0;
